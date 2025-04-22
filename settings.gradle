@@ -1,1 +1,5 @@
 rootProject.name = 'practice_3th_programs'
+
+include 'kafka_producer'
+include 'kafka_consumer'
+include 'log_analytics'

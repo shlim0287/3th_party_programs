@@ -17,7 +17,7 @@
 # 개발: dev, 테스트: test, 운영: prod
 spring:
   application:
-    name: practice_3th_party_program_producer
+    name: kafka_producer
 
   # ===================================================================
   # 카프카 설정 가이드

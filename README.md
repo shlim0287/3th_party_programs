@@ -13,6 +13,7 @@
 - [설치 지침](#setup-instructions)
 - [사용 예제](#usage-examples)
 - [고급 기능](#advanced-features)
+- [ELK 스택 및 로그 분석](#elk-stack-and-log-analytics)
 - [모니터링](#monitoring)
 - [모범 사례](#best-practices)
 - [문제 해결](#troubleshooting)
@@ -81,7 +82,10 @@ Kafka Consumer 애플리케이션은 Kafka에서 메시지를 소비하는 역�
 - **Zookeeper** - Kafka 클러스터 관리
 - **Kafka** - 메시지 브로커
 - **Kafdrop** - Kafka 모니터링을 위한 UI
-- **Elasticsearch** - 메시지 저장 및 검색용 (선택 사항)
+- **Elasticsearch** - 로그 및 메시지 저장 및 검색용
+- **Logstash** - 로그 수집 및 처리용
+- **Kibana** - 로그 시각화 및 대시보드용
+- **MySQL** - 구조화된 로그 데이터 저장용
 - **Prometheus** - 메트릭 수집용
 - **Grafana** - 메트릭 시각화용
 
@@ -184,6 +188,27 @@ curl -X GET http://localhost:8081/api/messages/stats
 4. **메시지 손실 방지 및 복구 메커니즘** - 안정적인 메시지 전송과 실패 시 복구 기능을 제공합니다.
 
 자세한 내용은 [Kafka 고급 기능 가이드](KAFKA_ADVANCED_FEATURES.md)를 참조하세요.
+
+## ELK 스택 및 로그 분석
+
+이 프로젝트는 ELK(Elasticsearch, Logstash, Kibana) 스택과 MySQL을 사용한 로그 분석 기능을 포함합니다:
+
+### 주요 구성 요소
+
+- **Logstash**: 로그 수집 및 처리
+- **Elasticsearch**: 로그 저장 및 검색
+- **Kibana**: 로그 시각화 및 대시보드
+- **MySQL**: 구조화된 로그 데이터 저장 (JPA 사용)
+- **Log Analytics 서비스**: 로그 처리 및 분석
+
+### 기능
+
+1. **로그 수집 파이프라인**: Logstash를 통해 다양한 소스에서 로그 수집
+2. **로그 저장 및 분석**: Elasticsearch와 MySQL에 로그 저장
+3. **시각화 대시보드**: Kibana를 통한 로그 데이터 시각화
+4. **머신러닝 기반 이상 탐지**: Elasticsearch의 머신러닝 기능을 활용한 이상 탐지
+
+자세한 내용은 [ELK 스택 및 로그 분석 가이드](README-ELK.md)를 참조하세요.
 
 ## 모니터링
 
