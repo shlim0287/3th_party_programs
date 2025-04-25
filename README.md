@@ -1,275 +1,232 @@
-# 카프카 학습 프로젝트
+로그 분석 및 AI 시스템
 
-이 프로젝트는 Spring Boot를 사용한 Apache Kafka의 프로덕션 수준 구현을 보여줍니다. 두 개의 애플리케이션으로 구성되어 있습니다:
-1. **Kafka Producer** - Kafka에 메시지를 생성합니다
-2. **Kafka Consumer** - Kafka에서 메시지를 소비합니다
+## 프로젝트 개요
+이 프로젝트는 분산 시스템의 로그 데이터를 수집, 처리, 분석하고 AI를 활용하여 인사이트를 제공하는 종합적인 플랫폼입니다. ELK 스택(Elasticsearch, Logstash, Kibana), Apache Kafka, Spring Boot, 그리고 경량 언어 모델(sLLM)을 통합하여 로그 데이터의 실시간 처리와 고급 분석 기능을 제공합니다.
 
-이 프로젝트는 Prometheus와 Grafana를 통한 포괄적인 모니터링과 Kafka 관리를 위한 Kafdrop UI를 포함합니다.
+## 기술 스택
 
-## 목차
+### 백엔드
+- **Spring Boot**: 마이크로서비스 아키텍처 구현
+- **Apache Kafka**: 분산 이벤트 스트리밍 플랫폼
+- **Elasticsearch**: 로그 데이터 저장 및 검색
+- **Logstash**: 로그 데이터 수집 및 변환
+- **Kibana**: 로그 데이터 시각화
+- **Python**: sLLM 모듈 구현
+- **Ollama/Llama 3**: 경량 언어 모델
 
-- [Kafka 개념](#kafka-concepts)
-- [프로젝트 구조](#project-structure)
-- [설치 지침](#setup-instructions)
-- [사용 예제](#usage-examples)
-- [고급 기능](#advanced-features)
-- [ELK 스택 및 로그 분석](#elk-stack-and-log-analytics)
-- [모니터링](#monitoring)
-- [모범 사례](#best-practices)
-- [문제 해결](#troubleshooting)
+### 모니터링 및 관측성
+- **Prometheus**: 메트릭 수집
+- **Grafana**: 메트릭 시각화
+- **Filebeat/Metricbeat**: 로그 및 메트릭 수집
 
-## Kafka 개념
+### 데이터베이스
+- **MySQL**: 로그 데이터 영구 저장
 
-### Apache Kafka란 무엇인가요?
+## 프로젝트 아키텍처
 
-Apache Kafka는 고처리량, 내결함성, 발행-구독 메시징을 처리하도록 설계된 분산 스트리밍 플랫폼입니다. 원래 LinkedIn에서 개발되었으며 나중에 오픈 소스 Apache 프로젝트가 되었습니다.
+```
+                                  ┌─────────────┐
+                                  │   Kibana    │
+                                  │  (시각화)   │
+                                  └──────┬──────┘
+                                         │
+┌─────────────┐    ┌──────────────┐    ┌─┴───────────┐    ┌─────────────┐
+│  로그 소스   │    │  Logstash    │    │Elasticsearch│    │ Prometheus  │
+│(애플리케이션)│───▶│ (수집/변환)  │───▶│  (저장/검색) │◀──│  (메트릭)   │
+└──────┬──────┘    └───────┬──────┘    └──────┬──────┘    └─────────────┘
+       │                  │                   │
+       │                  │                   │
+       │           ┌──────▼──────┐     ┌──────▼──────┐
+       └─────────▶│    Kafka     │───▶│Log Analytics│
+                   │  (메시징)   │     │   (분석)     │
+                   └──────┬──────┘     └──────┬──────┘
+                          │                   │
+                          │                   │
+                   ┌──────▼───────┐     ┌─────▼───────┐
+                   │Kafka Producer│     │    sLLM     │
+                   │Kafka Consumer│◀────│ (AI 분석)   │
+                   └──────────────┘     └─────────────┘
+```
 
-### 주요 개념
+## 모듈 구성
 
-#### 토픽
+### 1. Kafka Producer
+메시지를 생성하여 Kafka 토픽으로 전송하는 Spring Boot 애플리케이션입니다. 고가용성, 확장성, 신뢰성을 갖춘 메시지 생산자 역할을 수행합니다.
 
-**토픽**은 레코드가 발행되는 카테고리 또는 피드 이름입니다. Kafka의 토픽은 항상 다중 구독자입니다. 즉, 토픽은 여기에 작성된 데이터를 구독하는 0개, 1개 또는 여러 개의 소비자를 가질 수 있습니다.
+[자세한 내용](kafka_producer/README.md)
 
-#### 파티션
+### 2. Kafka Consumer
+Kafka 토픽으로부터 메시지를 소비하고 처리하는 Spring Boot 애플리케이션입니다. 다양한 소비 전략과 오류 처리 메커니즘을 제공합니다.
 
-토픽은 **파티션**되어 있습니다. 즉, 토픽이 서로 다른 Kafka 브로커에 위치한 여러 "버킷"에 분산되어 있습니다. 이를 통해 병렬 처리와 높은 처리량이 가능합니다.
+[자세한 내용](kafka_consumer/README.md)
 
-#### 프로듀서
+### 3. Log Analytics
+다양한 소스에서 로그 데이터를 수집, 저장, 분석하는 Spring Boot 애플리케이션입니다. Elasticsearch를 통해 고급 분석 및 시각화 기능을 제공합니다.
 
-**프로듀서**는 선택한 토픽에 데이터를 발행합니다. 프로듀서는 어떤 레코드를 토픽 내의 어떤 파티션에 할당할지 선택할 책임이 있습니다.
+[자세한 내용](log_analytics/README.md)
 
-#### 컨슈머
+### 4. sLLM (Small Language Model)
+경량 언어 모델(Llama 3)을 활용하여 로그 데이터를 분석하고 인사이트를 제공하는 Python 기반 애플리케이션입니다.
 
-**컨슈머**는 선택한 토픽에서 데이터를 읽습니다. 컨슈머는 컨슈머 그룹에 속하며, 토픽에 발행된 각 레코드는 구독하는 각 컨슈머 그룹 내의 하나의 컨슈머 인스턴스에 전달됩니다.
+[자세한 내용](sLLM/README.md)
 
-#### 브로커
+### 5. Logstash
+다양한 소스에서 데이터를 수집, 변환하여 Elasticsearch로 전송하는 데이터 처리 파이프라인입니다.
 
-Kafka는 **브로커**라고 불리는 하나 이상의 서버 클러스터로 실행됩니다. 브로커는 레코드가 발행될 때 이를 수신하고 저장하며, 컨슈머가 요청할 때 제공하는 역할을 합니다.
+### 6. Prometheus
+시스템 및 애플리케이션 메트릭을 수집하고 모니터링하는 도구입니다.
 
-#### ZooKeeper
+## 데이터 흐름
 
-Kafka는 클러스터를 관리하기 위해 **ZooKeeper**를 사용합니다. ZooKeeper는 컨트롤러 선출, 클러스터 멤버십, 토픽 구성, 할당량 및 ACL에 사용됩니다.
+1. **데이터 수집**:
+   - 애플리케이션에서 생성된 로그는 Logstash를 통해 수집됩니다.
+   - 시스템 메트릭은 Beats(Filebeat, Metricbeat)를 통해 수집됩니다.
 
-### Kafka 보장
+2. **데이터 처리**:
+   - Logstash는 수집된 데이터를 파싱, 변환, 보강하여 Kafka 토픽으로 전송합니다.
+   - Kafka는 데이터 스트림을 관리하고 소비자에게 제공합니다.
 
-- 프로듀서가 특정 토픽 파티션으로 보낸 메시지는 보낸 순서대로 추가됩니다.
-- 컨슈머 인스턴스는 로그에 저장된 순서대로 레코드를 확인합니다.
-- 복제 팩터가 N인 토픽의 경우, 로그에 커밋된 레코드를 잃지 않고 최대 N-1개의 서버 장애를 허용할 수 있습니다.
+3. **데이터 저장**:
+   - Elasticsearch는 로그 데이터를 저장하고 검색 기능을 제공합니다.
+   - MySQL은 로그 데이터의 영구 저장소 역할을 합니다.
 
-## 프로젝트 구조
+4. **데이터 분석**:
+   - Log Analytics 모듈은 로그 데이터를 분석하고 인사이트를 추출합니다.
+   - sLLM 모듈은 AI를 활용하여 로그 데이터에 대한 고급 분석을 수행합니다.
 
-### Kafka Producer
+5. **데이터 시각화**:
+   - Kibana는 Elasticsearch의 데이터를 시각화합니다.
+   - Grafana는 Prometheus의 메트릭을 시각화합니다.
 
-Kafka Producer 애플리케이션은 Kafka에 메시지를 전송하는 역할을 담당합니다. 다음을 포함합니다:
+## 주요 기능
 
-- 메시지 전송을 위한 **REST API**
-- JSON을 사용한 **메시지 직렬화**
-- **오류 처리** 및 재시도 메커니즘
-- 모니터링을 위한 **메트릭**
+### 로그 수집 및 처리
+- 다양한 소스(애플리케이션 로그, Nginx 액세스 로그, 시스템 메트릭)에서 로그 데이터 수집
+- 로그 데이터 정규화 및 구조화
+- 실시간 로그 스트리밍
 
-### Kafka Consumer
+### 로그 분석
+- 로그 데이터 검색 및 필터링
+- 로그 패턴 분석
+- 이상 탐지
+- 트렌드 분석
 
-Kafka Consumer 애플리케이션은 Kafka에서 메시지를 소비하는 역할을 담당합니다. 다음을 포함합니다:
+### AI 기반 인사이트
+- 로그 메시지 감정 분석
+- 이상 징후 자동 탐지
+- 대량 로그 데이터 요약
+- 자동 파인튜닝을 통한 모델 개선
 
-- 메시지 처리를 위한 **메시지 리스너**
-- JSON에서 **메시지 역직렬화**
-- **오류 처리** 및 재시도 메커니즘
-- 모니터링을 위한 **메트릭**
-- 처리된 메시지를 검색하기 위한 **REST API**
+### 모니터링 및 알림
+- 시스템 및 애플리케이션 메트릭 모니터링
+- 대시보드를 통한 시각화
+- 이상 상황 알림
 
-### 지원 서비스
+## 설치 및 실행
 
-- **Zookeeper** - Kafka 클러스터 관리
-- **Kafka** - 메시지 브로커
-- **Kafdrop** - Kafka 모니터링을 위한 UI
-- **Elasticsearch** - 로그 및 메시지 저장 및 검색용
-- **Logstash** - 로그 수집 및 처리용
-- **Kibana** - 로그 시각화 및 대시보드용
-- **MySQL** - 구조화된 로그 데이터 저장용
-- **Prometheus** - 메트릭 수집용
-- **Grafana** - 메트릭 시각화용
-
-## 설치 지침
-
-### 사전 요구 사항
-
-- Docker 및 Docker Compose
+### 사전 요구사항
 - Java 17 이상
-- Maven 또는 Gradle
+- Python 3.12 이상
+- Docker 및 Docker Compose
+- Kafka 클러스터
+- Elasticsearch 클러스터
+- MySQL 데이터베이스
 
-### 인프라 시작하기
+### 설치 방법
 
-1. 저장소 복제:
+1. 저장소 클론
    ```bash
-   git clone <repository-url>
-   cd kafka-learning-project
+   git clone https://github.com/yourusername/YoHanKi.git
+   cd YoHanKi
    ```
 
-2. Docker Compose를 사용하여 인프라 서비스 시작:
+2. Docker Compose로 인프라 시작
    ```bash
    docker-compose up -d
    ```
 
-   이렇게 하면 Zookeeper, Kafka, Kafdrop, Elasticsearch, Prometheus 및 Grafana가 시작됩니다.
-
-3. 모든 서비스가 실행 중인지 확인:
+3. 각 모듈 빌드 및 실행
    ```bash
-   docker-compose ps
-   ```
-
-### 애플리케이션 시작하기
-
-1. Kafka Producer 애플리케이션 시작:
-   ```bash
+   # Kafka Producer
    cd kafka_producer
    ./gradlew bootRun
-   ```
 
-2. Kafka Consumer 애플리케이션 시작:
-   ```bash
-   cd kafka_consumer
+   # Kafka Consumer
+   cd ../kafka_consumer
    ./gradlew bootRun
+
+   # Log Analytics
+   cd ../log_analytics
+   ./gradlew bootRun
+
+   # sLLM
+   cd ../sLLM
+   python -m venv .venv
+   Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
+   source .venv/bin/activate  # Linux/Mac
+   .venv\Scripts\activate     # Windows
+   pip install -r requirements.txt
+   python main.py
    ```
 
 ## 사용 예제
 
-### REST API를 통한 메시지 전송
-
-#### 복잡한 메시지 전송
-
+### 로그 데이터 전송
 ```bash
 curl -X POST http://localhost:8080/api/messages \
   -H "Content-Type: application/json" \
   -d '{
-    "content": "Hello, Kafka!",
+    "content": "Application started successfully",
     "type": "INFO",
-    "source": "curl-example",
+    "source": "user-service",
     "metadata": {
-      "key1": "value1",
-      "key2": "value2"
+      "version": "1.0.0",
+      "environment": "production"
     }
   }'
 ```
 
-#### 간단한 메시지 전송
-
+### 로그 분석 API 호출
 ```bash
-curl -X POST "http://localhost:8080/api/messages/simple?content=Hello%20Kafka&type=INFO"
+curl -X POST http://localhost:8083/analyze \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Connection refused: connect",
+    "analysis_type": "anomaly"
+  }'
 ```
 
-### 처리된 메시지 검색
+### Kibana 대시보드 접근
+웹 브라우저에서 `http://localhost:5601` 접속
 
-#### 특정 메시지 가져오기
+## 프로젝트 확장
 
-```bash
-curl -X GET http://localhost:8081/api/messages/{message-id}
-```
+### 새로운 로그 소스 추가
+1. Logstash 파이프라인 구성 파일 수정
+2. Kafka 토픽 생성
+3. Log Analytics 모듈에 새 모델 및 리포지토리 추가
 
-`{message-id}`를 메시지 전송 시 반환된 실제 메시지 ID로 대체하세요.
-
-#### 메시지 통계 가져오기
-
-```bash
-curl -X GET http://localhost:8081/api/messages/stats
-```
-
-### Kafdrop으로 Kafka 모니터링
-
-1. 브라우저에서 Kafdrop 열기: http://localhost:19000
-2. 토픽, 파티션 및 메시지 보기
-
-## 고급 기능
-
-이 프로젝트는 Kafka의 여러 고급 기능을 구현하여 실제 프로덕션 환경에서 필요한 다양한 시나리오를 지원합니다:
-
-1. **다중 토픽 관리** - 주요 메시지용 demo-topic과 피드백용 feedback-topic을 사용합니다.
-2. **양방향 통신** - 프로듀서가 컨슈머 역할을, 컨슈머가 프로듀서 역할을 수행할 수 있습니다.
-3. **다양한 배치 처리 옵션** - 일반 배치, 단일 메시지, 대용량 배치 처리를 지원합니다.
-4. **메시지 손실 방지 및 복구 메커니즘** - 안정적인 메시지 전송과 실패 시 복구 기능을 제공합니다.
-
-자세한 내용은 [Kafka 고급 기능 가이드](KAFKA_ADVANCED_FEATURES.md)를 참조하세요.
-
-## ELK 스택 및 로그 분석
-
-이 프로젝트는 ELK(Elasticsearch, Logstash, Kibana) 스택과 MySQL을 사용한 로그 분석 기능을 포함합니다:
-
-### 주요 구성 요소
-
-- **Logstash**: 로그 수집 및 처리
-- **Elasticsearch**: 로그 저장 및 검색
-- **Kibana**: 로그 시각화 및 대시보드
-- **MySQL**: 구조화된 로그 데이터 저장 (JPA 사용)
-- **Log Analytics 서비스**: 로그 처리 및 분석
-
-### 기능
-
-1. **로그 수집 파이프라인**: Logstash를 통해 다양한 소스에서 로그 수집
-2. **로그 저장 및 분석**: Elasticsearch와 MySQL에 로그 저장
-3. **시각화 대시보드**: Kibana를 통한 로그 데이터 시각화
-4. **머신러닝 기반 이상 탐지**: Elasticsearch의 머신러닝 기능을 활용한 이상 탐지
-
-자세한 내용은 [ELK 스택 및 로그 분석 가이드](README-ELK.md)를 참조하세요.
-
-## 모니터링
-
-### Prometheus
-
-Prometheus는 프로듀서와 컨슈머 애플리케이션 모두에서 메트릭을 수집하는 데 사용됩니다. http://localhost:9090에서 Prometheus UI에 접근할 수 있습니다.
-
-모니터링할 주요 메트릭:
-
-- **kafka.producer.messages.sent** - 프로듀서가 보낸 메시지 수
-- **kafka.producer.messages.failed** - 전송에 실패한 메시지 수
-- **kafka.producer.message.send.time** - 메시지 전송에 걸린 시간
-- **kafka.consumer.messages.received** - 컨슈머가 받은 메시지 수
-- **kafka.consumer.messages.processed** - 성공적으로 처리된 메시지 수
-- **kafka.consumer.messages.failed** - 처리에 실패한 메시지 수
-- **kafka.consumer.message.processing.time** - 메시지 처리에 걸린 시간
-
-### Grafana
-
-Grafana는 Prometheus에서 수집한 메트릭을 시각화하는 데 사용됩니다. http://localhost:3000에서 Grafana UI에 접근할 수 있습니다.
-
-기본 자격 증명:
-- 사용자 이름: admin
-- 비밀번호: admin
-
-## 모범 사례
-
-### 프로듀서 모범 사례
-
-1. **멱등성 프로듀서 사용**: 중복 메시지를 방지하기 위해 `enable.idempotence=true`를 설정하세요.
-2. **적절한 확인 응답 설정**: 중요한 데이터의 경우 모든 복제본이 메시지를 수신하도록 `acks=all`을 사용하세요.
-3. **재시도 로직 구현**: 일시적인 장애에 대비하여 백오프가 있는 재시도를 사용하세요.
-4. **성능 모니터링**: 전송 시간, 성공률, 오류율과 같은 메트릭을 추적하세요.
-5. **적절한 직렬화 사용**: JSON은 사람이 읽을 수 있지만 Avro나 Protobuf와 같은 이진 형식보다 효율성이 떨어집니다.
-
-### 컨슈머 모범 사례
-
-1. **수동 오프셋 커밋 사용**: 데이터 손실을 방지하기 위해 자동 커밋을 피하세요.
-2. **오류 처리 구현**: 예외를 처리하고 재시도 로직을 구현하세요.
-3. **컨슈머 지연 모니터링**: 컨슈머가 최신 메시지에서 얼마나 뒤처져 있는지 추적하세요.
-4. **적절한 역직렬화 사용**: 프로듀서가 사용하는 직렬화 형식과 일치시키세요.
-5. **정상 종료 구현**: 종료하기 전에 모든 메시지가 처리되도록 하세요.
+### 새로운 분석 기능 추가
+1. Log Analytics 모듈에 새 분석 서비스 추가
+2. sLLM 모듈에 새 분석 엔드포인트 추가
+3. Kibana에 새 시각화 추가
 
 ## 문제 해결
 
 ### 일반적인 문제
-
-1. **연결 거부**: Kafka와 Zookeeper가 실행 중인지 확인하세요.
-2. **직렬화/역직렬화 오류**: 프로듀서와 컨슈머가 호환되는 직렬화 형식을 사용하는지 확인하세요.
-3. **컨슈머가 메시지를 수신하지 않음**: 컨슈머 그룹 ID, 토픽 이름 및 파티션 할당을 확인하세요.
-4. **프로듀서가 메시지를 전송하지 않음**: 연결 설정 및 오류 로그를 확인하세요.
+- **Kafka 연결 오류**: Kafka 브로커 주소 및 포트 확인
+- **Elasticsearch 연결 오류**: Elasticsearch 클러스터 상태 확인
+- **로그 파싱 오류**: Logstash 파이프라인 구성 확인
 
 ### 로그 확인
+- Kafka Producer: `kafka_producer/logs/application.log`
+- Kafka Consumer: `kafka_consumer/logs/application.log`
+- Log Analytics: `log_analytics/logs/log-analytics.log`
+- sLLM: `sLLM/sllm.log`
 
-- **프로듀서 로그**: 프로듀서 애플리케이션 디렉토리에서 `logs/application.log`를 확인하세요.
-- **컨슈머 로그**: 컨슈머 애플리케이션 디렉토리에서 `logs/application.log`를 확인하세요.
-- **Kafka 로그**: `docker-compose logs kafka`로 Docker 로그를 확인하세요.
-
-### 도움 받기
-
-이 문서에서 다루지 않은 문제가 발생하면 다음을 수행하세요:
-1. 애플리케이션 로그에서 오류 메시지를 확인하세요.
-2. [Apache Kafka 문서](https://kafka.apache.org/documentation/)를 참조하세요.
-3. Stack Overflow나 Kafka 메일링 리스트에서 유사한 문제를 검색하세요.
+## 기여 방법
+1. 저장소 포크
+2. 기능 브랜치 생성 (`git checkout -b feature/amazing-feature`)
+3. 변경 사항 커밋 (`git commit -m 'Add some amazing feature'`)
+4. 브랜치 푸시 (`git push origin feature/amazing-feature`)
+5. Pull Request 생성

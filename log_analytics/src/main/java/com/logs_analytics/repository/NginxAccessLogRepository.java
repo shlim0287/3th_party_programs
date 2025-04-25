@@ -57,4 +57,9 @@ public interface NginxAccessLogRepository extends JpaRepository<NginxAccessLog, 
      */
     @Query("SELECT l.requestPath, COUNT(l) FROM NginxAccessLog l GROUP BY l.requestPath ORDER BY COUNT(l) DESC")
     List<Object[]> findTop10RequestPaths();
+
+    /**
+     * Find logs by created at time range.
+     */
+    List<NginxAccessLog> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 }

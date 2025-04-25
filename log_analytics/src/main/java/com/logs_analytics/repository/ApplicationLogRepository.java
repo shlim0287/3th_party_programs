@@ -62,4 +62,9 @@ public interface ApplicationLogRepository extends JpaRepository<ApplicationLog, 
      * Find most recent error logs.
      */
     List<ApplicationLog> findTop10ByLogLevelOrderByTimestampDesc(String logLevel);
+
+    /**
+     * Find logs by created at time range.
+     */
+    List<ApplicationLog> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 }

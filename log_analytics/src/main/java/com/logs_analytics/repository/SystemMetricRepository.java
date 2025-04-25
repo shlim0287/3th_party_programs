@@ -64,4 +64,9 @@ public interface SystemMetricRepository extends JpaRepository<SystemMetric, Long
      */
     @Query("SELECT s FROM SystemMetric s WHERE s.timestamp = (SELECT MAX(s2.timestamp) FROM SystemMetric s2 WHERE s2.host = s.host)")
     List<SystemMetric> findLatestMetricsForEachHost();
+
+    /**
+     * Find metrics by created at time range.
+     */
+    List<SystemMetric> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 }
